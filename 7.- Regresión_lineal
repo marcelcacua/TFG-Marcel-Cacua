@@ -1,0 +1,117 @@
+#ANALISIS DE REGRESIÓN MULTIPLE
+
+import pandas as pd
+import statsmodels.api as sm
+import matplotlib.pyplot as plt
+from statsmodels.stats.outliers_influence import variance_inflation_factor
+
+file_path = "C:\\Users\\marce\\Desktop\\TFG\\Copia de variables_accesibilidad_vivienda.xlsx"
+df = pd.read_excel(file_path)
+
+df = df.rename(columns={
+    'Tasa_esfuerzo': 'Tasa_esfuerzo',
+    'Renat_Media_por_hogar ': 'Renta_media',
+    'PIB_per_capita_provincial': 'PIB_PP',
+    'Precio_m2': 'Precio_m2',
+    'Tasa_empleo': 'Tasa_empleo',
+    'Tasa_crecimiento_población': 'Δ_población',
+    'Numero_vivienda_terminadas': 'Vivienda_nueva',
+    'Numero_hipotecas': 'Num_Hipotecas',
+    'IPV': 'IPV',
+    'Importe_medio_hipotecas': 'Importe_hipotecas'
+})
+
+df_multi = df[df['Año'].isin([2015, 2018, 2022])].copy()
+
+variables = [
+    "Renta_media", "PIB_PP", "Precio_m2", "IPV", "IPC",
+    "Tasa_empleo", "Δ_población", "Vivienda_nueva", "Num_Hipotecas"
+]
+
+df_multi = df_multi.dropna(subset=variables + ['Tasa_esfuerzo'])
+
+X = df_multi[variables].astype(float)
+y = df_multi["Tasa_esfuerzo"].astype(float)
+X = X.dropna()
+y = y.loc[X.index]
+X = sm.add_constant(X, has_constant='add')
+
+modelo = sm.OLS(y, X).fit()
+print(modelo.summary())
+
+#Añadimos dummies 2018 y 2022 al modelo 
+
+df_multi = df[df['Año'].isin([2015, 2018, 2022])].copy()
+
+variables = [
+    "Renta_media", "PIB_PP", "Precio_m2", "IPV", "IPC",
+    "Tasa_empleo", "Δ_población", "Vivienda_nueva", "Num_Hipotecas"
+]
+
+df_multi = df_multi.dropna(subset=variables + ['Tasa_esfuerzo'])
+
+dummies_ano = pd.get_dummies(df_multi["Año"], prefix="Año", drop_first=True) 
+
+X = pd.concat([df_multi[variables], dummies_ano], axis=1)
+y = df_multi["Tasa_esfuerzo"].astype(float)
+
+X = X.astype(float)
+X = sm.add_constant(X, has_constant='add')
+
+modelo = sm.OLS(y, X).fit()
+print(modelo.summary())
+
+#Se realiza una selección hacia atras
+
+def backward_elimination(X, y, verbose=True):
+    while True:
+        model = sm.OLS(y, X).fit()
+        pvalues = model.pvalues.iloc[1:] 
+        max_pval = pvalues.max()
+        if max_pval > 0.05:
+            excluded_var = pvalues.idxmax()
+            if verbose:
+                print(f"Eliminando '{excluded_var}' con p-valor = {max_pval:.4f}")
+            X = X.drop(columns=[excluded_var])
+        else:
+            break
+    return model, X
+
+modelo_optimo, X_opt = backward_elimination(X, y)
+print(modelo_optimo.summary())
+
+coeficientes = modelo_optimo.params
+
+# Ecuación final
+ecuacion = f"Tasa_esfuerzo = {coeficientes[0]:.4g}"  
+
+for variable, coef in coeficientes.items():
+    if variable != 'const':
+        signo = "+" if coef >= 0 else "-"
+        ecuacion += f" {signo} {abs(coef):.4g} * {variable}"
+
+print("Ecuación final:")
+print(ecuacion)
+
+#---------------------------------------------------------------------------------------------------------------------------------
+
+
+# GRÁFICO DE RESIDUOS
+residuos = modelo_optimo.resid
+valores_ajustados = modelo_optimo.fittedvalues
+
+plt.figure(figsize=(8, 6))
+plt.scatter(valores_ajustados, residuos, color='#1f77b4', alpha=0.6)
+plt.axhline(0, color='red', linestyle='--', linewidth=2)
+plt.grid(True, linestyle='--', color='gray', alpha=0.5)
+plt.title('Gráfico de Residuos vs Valores Ajustados (Modelo Óptimo)', fontsize=14)
+plt.xlabel('Valores Ajustados de Tasa de Esfuerzo', fontsize=12)
+plt.ylabel('Residuos', fontsize=12)
+plt.tight_layout()
+plt.show()
+
+# GRÁFICO Q-Q
+sm.qqplot(residuos, line='45')
+plt.title("Q-Q Plot de Residuos (Modelo Óptimo)")
+plt.grid(True, linestyle='--', alpha=0.5)
+plt.show()
