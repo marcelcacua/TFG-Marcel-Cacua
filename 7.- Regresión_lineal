@@ -97,6 +97,7 @@ print(ecuacion)
 
 
 # GRÁFICO DE RESIDUOS
+
 residuos = modelo_optimo.resid
 valores_ajustados = modelo_optimo.fittedvalues
 
@@ -111,6 +112,8 @@ plt.tight_layout()
 plt.show()
 
 # GRÁFICO Q-Q
+
+residuos = modelo_optimo.resid
 sm.qqplot(residuos, line='45')
 plt.title("Q-Q Plot de Residuos (Modelo Óptimo)")
 plt.grid(True, linestyle='--', alpha=0.5)
