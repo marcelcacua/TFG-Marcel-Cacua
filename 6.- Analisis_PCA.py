@@ -95,23 +95,23 @@ print(f"Varianza total explicada por los primeros dos componentes: {varianza_tot
 
 #Grafico de codo
 
-pca_full = PCA()
-pca_full.fit(data_scaled)
+autovalores = pca_full.explained_variance_
+varianza_ratio = pca_full.explained_variance_ratio_
 
-explained_var = pca_full.explained_variance_ratio_
-componentes = range(1, len(explained_var) + 1)
+componentes = np.arange(1, len(autovalores) + 1)
 
 plt.figure(figsize=(8, 5))
-plt.plot(componentes, explained_var, marker='o', linestyle='--', color='navy', linewidth=1.8)
+plt.plot(componentes, autovalores, marker='o', linestyle='--', color='navy', linewidth=1.8, label='Autovalor')
 
-for i, var in enumerate(explained_var):
-    plt.text(componentes[i], var + 0.005, f"{var:.2f}", ha='center', fontsize=9, color='black')
+for i, val in enumerate(autovalores):
+    plt.text(componentes[i], val + 0.1, f"{val:.2f}", ha='center', fontsize=9, color='navy')
 
 plt.title('Gráfico del Codo (Scree Plot)', fontsize=14, fontweight='bold')
 plt.xlabel('Número de Componentes Principales', fontsize=12)
-plt.ylabel('Proporción de Varianza Explicada', fontsize=12)
+plt.ylabel('Autovalor', fontsize=12)
 plt.xticks(componentes)
 plt.grid(True, linestyle='--', alpha=0.6)
+plt.legend()
 plt.tight_layout()
 plt.show()
 
