@@ -62,7 +62,7 @@ pca_2022 = pca_all_df[pca_all_df['Año'] == 2022].copy()
 
 kmeans = KMeans(n_clusters=3, random_state=42)
 clusters = kmeans.fit_predict(pca_2022[['PC1', 'PC2', 'PC3']])
-pca_2022['Cluster'] = clusters
+pca_2022['Cluster'] = clusters + 1
 
 #GRAFICO DISPERSIÓN CLUSTER 
 
@@ -71,7 +71,7 @@ ax = fig.add_subplot(111, projection='3d')
 sc = ax.scatter(pca_2022['PC1'], pca_2022['PC2'], pca_2022['PC3'],
                 c=pca_2022['Cluster'], cmap='Set1', s=100)
 
-ax.set_title('Clustering y PCA - 4 Componentes para 2022', fontsize=14)
+ax.set_title('Clustering y PCA - 3 Componentes para 2022', fontsize=14)
 ax.set_xlabel('PC1')
 ax.set_ylabel('PC2')
 ax.set_zlabel('PC3')
@@ -96,13 +96,19 @@ plt.ylabel('Variables')
 plt.tight_layout()
 plt.show()
  
-#TABLA DE CLUSTER Y COMPONENTES PRINCIPALES POR PROVINCIA
+#Tabla de cluster y componentes principales por provincia
+
+componentes_provincia = pca_2022[['Provincia', 'PC1', 'PC2', 'PC3', 'Cluster']]
+print(componentes_provincia)
+componentes_provincia.to_excel("C:\\Users\\marce\\Desktop\\TFG\\CORRECCIÓN FINAL\\Python_TFG\\componentes_provincia_2022_2.xlsx", index=False)
+
+#Grafico Dinamico para ver los valores de los componentes principales para cada provincia.
 
 componentes_provincia = pca_2022[['Provincia', 'PC1', 'PC2', 'PC3', 'Cluster']]
 
 print(componentes_provincia)
 
-componentes_provincia.to_excel("C:\\Users\\marce\\Desktop\\TFG\\CORRECCIÓN FINAL\\Python_TFG\\componentes_provincia_2022.xlsx", index=False)
+componentes_provincia.to_excel("C:\\Users\\marce\\Desktop\\TFG\\CORRECCIÓN FINAL\\Python_TFG\\componentes_provincia_2022_2.xlsx", index=False)
 
 #Grafico Dinamico para ver los valores de los componentes principales para cada provincia.
 
@@ -145,7 +151,7 @@ for k in ks:
 
 plt.figure(figsize=(10, 6))
 sns.lineplot(x=ks, y=silhouette_scores, marker='o', linewidth=2.5, color='#d62728')
-plt.axvline(x=2, color='blue', linestyle='--', label='K seleccionado = 4')
+plt.axvline(x=3, color='blue', linestyle='--', label='K seleccionado = 4')
 plt.title('Índice de Silhouette según número de clusters (K)', fontsize=14)
 plt.xlabel('Número de Clusters (K)')
 plt.ylabel('Índice de Silhouette')
@@ -157,7 +163,7 @@ plt.show()
 
 #Grafico dendrograma
 
-file_path = "C:\\Users\\marce\\Desktop\\TFG\\Copia de variables_accesibilidad_vivienda.xlsx"
+file_path = "C:\\Users\\marce\\Desktop\\TFG\\CORRECCIÓN FINAL\\Python_TFG\\variables_accesibilidad_vivienda.xlsx"
 df = pd.read_excel(file_path)
 
 df = df.rename(columns={
@@ -210,7 +216,7 @@ dendrogram(linked,
            orientation='top',
            distance_sort='descending',
            show_leaf_counts=True)
-plt.axhline(y=16, color='r', linestyle='--', label='Corte a distancia 8')
+plt.axhline(y=16, color='r', linestyle='--', label='Corte a distancia 16')
 plt.title("Dendrograma - Análisis jerárquico (Corte en 3 grupos)")
 plt.xlabel("Observaciones")
 plt.ylabel("Distancia")
