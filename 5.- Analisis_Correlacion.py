@@ -1,12 +1,11 @@
-import pandas as pd
-import matplotlib.pyplot as plt
-import seaborn as sns
-import numpy as np 
+#Primero se debe importar la base de datos creada.
 
-#TRES MATRICES DE CORRELACIÓN 
-
-file_path = "C:\\Users\\marce\\Desktop\\TFG\\Copia de variables_accesibilidad_vivienda.xlsx"
+file_path = "C:\\Users\\marce\\Desktop\\TFG\\variables_accesibilidad_vivienda.xlsx"
 df = pd.read_excel(file_path)
+
+#----------------------------------------------------------------------------------------------------------------------
+#MATRIZ DE CORRELACIÓN PARA CADA PERIODO ANALIZADO
+#----------------------------------------------------------------------------------------------------------------------
 
 df.columns
 df = df.rename(columns={
@@ -14,14 +13,13 @@ df = df.rename(columns={
     'Renat_Media_por_hogar ': 'Renta_media',
     'PIB_per_capita_provincial': 'PIB_PP',
     'Precio_m2': 'Precio_m2',
-    'Tipos_hipotecario': 'Tipo_interes',
-    'Tasa_Paro': 'Tasa_paro',
     'Tasa_empleo': 'Tasa_empleo',
     'Tasa_crecimiento_población': 'Δ_población',
     'Numero_vivienda_terminadas': 'Vivienda_nueva',
     'Numero_hipotecas' : 'Num_Hipotecas',
 })
 
+# Variables para la correlación
 variables = [
     "Tasa_esfuerzo",
     "Renta_media",
@@ -35,8 +33,9 @@ variables = [
     "Num_Hipotecas",
 ]
 
-sns.set(style="white", font_scale=1.2)
 
+sns.set(style="white", font_scale=1.2)
+#Crear figuras
 fig, axes = plt.subplots(1, 3, figsize=(15, 7))
 años = [2015, 2018, 2022]
 
@@ -53,23 +52,9 @@ for i, año in enumerate(años):
 plt.tight_layout()
 plt.show()
 
-#MATRIZ DE CORRELACIÓN UNICA 
-
-df.columns
-df = df.rename(columns={
-    'Tasa_esfuerzo': 'Tasa_esfuerzo',
-    'Renat_Media_por_hogar ': 'Renta_media',
-    'PIB_per_capita_provincial': 'PIB_PP',
-    'Precio_m2': 'Precio_m2',
-    'Tipos_hipotecario': 'Tipo_interes',
-    'Tasa_Paro': 'Tasa_paro',
-    'Tasa_empleo': 'Tasa_empleo',
-    'Tasa_crecimiento_población': 'Δ_población',
-    'Numero_vivienda_terminadas': 'Vivienda_nueva',
-    'Numero_hipotecas' : 'Num_Hipotecas',
-    'IPV' : 'IPV',
-    'Importe_medio_hipotecas' : 'Importe_hipotecas'
-})
+#----------------------------------------------------------------------------------------------------------------------
+#MATRIZ DE CORRELACIÓN UNICA
+#----------------------------------------------------------------------------------------------------------------------
 
 variables = [
     "Tasa_esfuerzo",
@@ -87,16 +72,16 @@ print(variables)
 
 sns.set(style="white", font_scale=0.9)
 
+# Filtramos los datos para los años 2015, 2020 y 2024
 df_años = df[df["Año"].isin([2015, 2018, 2022])]
 
+# Calcular la matriz de correlación para todos los años juntos
 corr = df_años[variables].corr(method='pearson')
 
+# Crear la figura
 plt.figure(figsize=(8, 6))
-
 sns.heatmap(corr, annot=True, fmt=".2f", cmap='coolwarm', center=0,
             square=True, cbar=True, annot_kws={"size": 10})
-
 plt.title("Matriz de correlación para 2015-2018-2022", fontsize=12)
-
 plt.tight_layout()
 plt.show()
