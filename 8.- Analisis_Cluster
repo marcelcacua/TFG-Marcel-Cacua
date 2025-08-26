@@ -1,4 +1,6 @@
-#Analisis de clusters Grafico Final
+#------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+#ANALISIS DE CLUSTER
+#------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 import pandas as pd
 import numpy as np
@@ -13,25 +15,20 @@ from sklearn.metrics import silhouette_score
 from scipy.cluster.hierarchy import dendrogram, linkage, fcluster
 import matplotlib.patches as mpatches
 
-file_path = "C:\\Users\\marce\\Desktop\\TFG\\Copia de variables_accesibilidad_vivienda.xlsx"
+file_path = "C:\\Users\\marce\\Desktop\\TFG\\CORRECCIÓN FINAL\\Python_TFG\\variables_accesibilidad_vivienda.xlsx"
 df = pd.read_excel(file_path)
 
 df = df.rename(columns={
-    'Provincia ':'Provincia',
-    'Tasa_esfuerzo': 'Tasa_esfuerzo',
     'Renat_Media_por_hogar ': 'Renta_media',
     'PIB_per_capita_provincial': 'PIB_PP',
     'Precio_m2': 'Precio_m2',
-    'Tipos_hipotecario': 'Tipo_interes',
-    'Tasa_Paro': 'Tasa_paro',
+    'IPV' : 'IPV',
+    'IPC' : 'IPC',
     'Tasa_empleo': 'Tasa_empleo',
     'Tasa_crecimiento_población': 'Δ_población',
     'Numero_vivienda_terminadas': 'Vivienda_nueva',
-    'Numero_hipotecas': 'Num_Hipotecas',
-    'IPV': 'IPV',
-    'Importe_medio_hipotecas': 'Importe_hipotecas'
+    'Numero_hipotecas' : 'Num_Hipotecas',
 })
-df.columns
 
 variables = [
     "Renta_media",
@@ -60,26 +57,58 @@ pca_all_df['Año'] = df_filtered['Año'].values
 
 pca_2022 = pca_all_df[pca_all_df['Año'] == 2022].copy()
 
-kmeans = KMeans(n_clusters=3, random_state=42)
-clusters = kmeans.fit_predict(pca_2022[['PC1', 'PC2', 'PC3']])
-pca_2022['Cluster'] = clusters + 1
+#------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+#GRAFICO SILHOUETTE 
+#------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-#GRAFICO DISPERSIÓN CLUSTER 
+#Se procede a realizar un grafico de silhouette que nos muestre cual es el numero optimo de clusters para nuestro modelo.
 
-fig = plt.figure(figsize=(10, 8))
-ax = fig.add_subplot(111, projection='3d')
-sc = ax.scatter(pca_2022['PC1'], pca_2022['PC2'], pca_2022['PC3'],
-                c=pca_2022['Cluster'], cmap='Set1', s=100)
+silhouette_scores = []
+ks = list(range(2, 10))
 
-ax.set_title('Clustering y PCA - 3 Componentes para 2022', fontsize=14)
-ax.set_xlabel('PC1')
-ax.set_ylabel('PC2')
-ax.set_zlabel('PC3')
-plt.colorbar(sc, label='Cluster')
+for k in ks:
+    kmeans = KMeans(n_clusters=k, random_state=42)
+    labels = kmeans.fit_predict(pca_2022[['PC1', 'PC2', 'PC3']])
+    score = silhouette_score(pca_2022[['PC1', 'PC2', 'PC3']], labels)
+    silhouette_scores.append(score)
+
+plt.figure(figsize=(10, 6))
+sns.lineplot(x=ks, y=silhouette_scores, marker='o', linewidth=2.5, color='#d62728')
+plt.axvline(x=3, color='blue', linestyle='--', label='K seleccionado = 3')
+plt.title('Índice de Silhouette según número de clusters (K)', fontsize=14)
+plt.xlabel('Número de Clusters (K)')
+plt.ylabel('Índice de Silhouette')
+plt.grid(True, linestyle='--', alpha=0.6)
+plt.xticks(ks)
+plt.legend()
 plt.tight_layout()
 plt.show()
 
+#------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+#Gráfico de Dendograma
+#------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+X_scaled = scaler.fit_transform(scaler)
+linked = linkage(X_scaled, method='ward')
+
+plt.figure(figsize=(12, 6))
+dendrogram(linked,
+           orientation='top',
+           distance_sort='descending',
+           show_leaf_counts=True)
+plt.axhline(y=16, color='r', linestyle='--', label='Corte a distancia 16')
+plt.title("Dendrograma - Análisis jerárquico (Corte en 3 grupos)")
+plt.xlabel("Observaciones")
+plt.ylabel("Distancia")
+plt.legend()
+plt.show()
+
+#------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 #LOADINGS 
+#------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+#Volvemos a añadir los loadings para recordar las caracteristiicas de cada componenet principal, de esta manera podremos conocer
+#Las craa¡acteristicas que describen a cada segmento.
 
 loadings_df = pd.DataFrame(
     pca.components_.T,
@@ -95,14 +124,31 @@ plt.xlabel('Componentes Principales')
 plt.ylabel('Variables')
 plt.tight_layout()
 plt.show()
+
+#------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+#Gráfico de dispersión Cluster
+#------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+#Se realiza un primer grafico tridimensional que muestre las provincias para el periodo 2022
+
+kmeans = KMeans(n_clusters=3, random_state=42)
+clusters = kmeans.fit_predict(pca_2022[['PC1', 'PC2', 'PC3']])
+pca_2022['Cluster'] = clusters + 1 
+
+fig = plt.figure(figsize=(10, 8))
+ax = fig.add_subplot(111, projection='3d')
+sc = ax.scatter(pca_2022['PC1'], pca_2022['PC2'], pca_2022['PC3'],
+                c=pca_2022['Cluster'], cmap='Set1', s=100)
+
+ax.set_title('Clustering y PCA - 3 Componentes para 2022', fontsize=14)
+ax.set_xlabel('PC1')
+ax.set_ylabel('PC2')
+ax.set_zlabel('PC3')
+plt.colorbar(sc, label='Cluster')
+plt.tight_layout()
+plt.show()
  
-#Tabla de cluster y componentes principales por provincia
-
-componentes_provincia = pca_2022[['Provincia', 'PC1', 'PC2', 'PC3', 'Cluster']]
-print(componentes_provincia)
-componentes_provincia.to_excel("C:\\Users\\marce\\Desktop\\TFG\\CORRECCIÓN FINAL\\Python_TFG\\componentes_provincia_2022_2.xlsx", index=False)
-
-#Grafico Dinamico para ver los valores de los componentes principales para cada provincia.
+#De igual manera generamos una tabla que nos muestre el la provincia junto a sus respectivos valores por cada componente principal y a que segmento pertenecen.
 
 componentes_provincia = pca_2022[['Provincia', 'PC1', 'PC2', 'PC3', 'Cluster']]
 
@@ -110,7 +156,7 @@ print(componentes_provincia)
 
 componentes_provincia.to_excel("C:\\Users\\marce\\Desktop\\TFG\\CORRECCIÓN FINAL\\Python_TFG\\componentes_provincia_2022_2.xlsx", index=False)
 
-#Grafico Dinamico para ver los valores de los componentes principales para cada provincia.
+#Finalmente generamos un gráfico dinámico para ver los valores de los componentes principales para cada provincia dentro del la representación 3D.
 
 pca_2022['Cluster'] = pca_2022['Cluster'].astype(str)
 
@@ -135,96 +181,3 @@ fig.update_layout(
 )
 
 fig.show()
-
-#--------------------------------------------------------------------------------------------------------------------------------------------------
-
-#GRAFICO SILHOUETTE 
-
-silhouette_scores = []
-ks = list(range(2, 10))
-
-for k in ks:
-    kmeans = KMeans(n_clusters=k, random_state=42)
-    labels = kmeans.fit_predict(pca_2022[['PC1', 'PC2', 'PC3']])
-    score = silhouette_score(pca_2022[['PC1', 'PC2', 'PC3']], labels)
-    silhouette_scores.append(score)
-
-plt.figure(figsize=(10, 6))
-sns.lineplot(x=ks, y=silhouette_scores, marker='o', linewidth=2.5, color='#d62728')
-plt.axvline(x=3, color='blue', linestyle='--', label='K seleccionado = 4')
-plt.title('Índice de Silhouette según número de clusters (K)', fontsize=14)
-plt.xlabel('Número de Clusters (K)')
-plt.ylabel('Índice de Silhouette')
-plt.grid(True, linestyle='--', alpha=0.6)
-plt.xticks(ks)
-plt.legend()
-plt.tight_layout()
-plt.show()
-
-#Grafico dendrograma
-
-file_path = "C:\\Users\\marce\\Desktop\\TFG\\CORRECCIÓN FINAL\\Python_TFG\\variables_accesibilidad_vivienda.xlsx"
-df = pd.read_excel(file_path)
-
-df = df.rename(columns={
-    'Provincia ':'Provincia',
-    'Tasa_esfuerzo': 'Tasa_esfuerzo',
-    'Renat_Media_por_hogar ': 'Renta_media',
-    'PIB_per_capita_provincial': 'PIB_PP',
-    'Precio_m2': 'Precio_m2',
-    'Tipos_hipotecario': 'Tipo_interes',
-    'Tasa_Paro': 'Tasa_paro',
-    'Tasa_empleo': 'Tasa_empleo',
-    'Tasa_crecimiento_población': 'Δ_población',
-    'Numero_vivienda_terminadas': 'Vivienda_nueva',
-    'Numero_hipotecas': 'Num_Hipotecas',
-    'IPV': 'IPV',
-    'Importe_medio_hipotecas': 'Importe_hipotecas'
-})
-df.columns
-
-variables = [
-    "Renta_media",
-    "PIB_PP",
-    "Precio_m2",
-     "IPV",
-     "IPC",
-    "Tasa_empleo",
-    "Δ_población",
-    "Vivienda_nueva",
-    "Num_Hipotecas",
-]
-
-df_filtered = df[df["Año"].isin([2015, 2018, 2022])].copy()
-df_filtered = df_filtered.dropna(subset=variables)
-
-scaler = StandardScaler()
-data_scaled_all = scaler.fit_transform(df_filtered[variables])
-
-pca = PCA(n_components=3)
-principal_components_all = pca.fit_transform(data_scaled_all)
-
-X = df_filtered[variables].dropna()
-
-scaler = StandardScaler()
-X_scaled = scaler.fit_transform(X)
-
-linked = linkage(X_scaled, method='ward')
-
-plt.figure(figsize=(12, 6))
-dendrogram(linked,
-           orientation='top',
-           distance_sort='descending',
-           show_leaf_counts=True)
-plt.axhline(y=16, color='r', linestyle='--', label='Corte a distancia 16')
-plt.title("Dendrograma - Análisis jerárquico (Corte en 3 grupos)")
-plt.xlabel("Observaciones")
-plt.ylabel("Distancia")
-plt.legend()
-plt.show()
-
-#------------------------------------------------------------------------------------------------------------------------------------------------------------------
-
-
-
-
