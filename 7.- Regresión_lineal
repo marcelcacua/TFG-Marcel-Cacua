@@ -1,11 +1,14 @@
+#------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 #ANALISIS DE REGRESIÓN MULTIPLE
+#------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+import numpy as np
 import pandas as pd
 import statsmodels.api as sm
 import matplotlib.pyplot as plt
 from statsmodels.stats.outliers_influence import variance_inflation_factor
 
-file_path = "C:\\Users\\marce\\Desktop\\TFG\\Copia de variables_accesibilidad_vivienda.xlsx"
+file_path = "C:\\Users\\marce\\Desktop\\TFG\\CORRECCIÓN FINAL\\Python_TFG\\variables_accesibilidad_vivienda.xlsx"
 df = pd.read_excel(file_path)
 
 df = df.rename(columns={
@@ -13,21 +16,28 @@ df = df.rename(columns={
     'Renat_Media_por_hogar ': 'Renta_media',
     'PIB_per_capita_provincial': 'PIB_PP',
     'Precio_m2': 'Precio_m2',
+    'IPV' : 'IPV',
+    'IPC' : 'IPC',
     'Tasa_empleo': 'Tasa_empleo',
     'Tasa_crecimiento_población': 'Δ_población',
     'Numero_vivienda_terminadas': 'Vivienda_nueva',
-    'Numero_hipotecas': 'Num_Hipotecas',
-    'IPV': 'IPV',
-    'Importe_medio_hipotecas': 'Importe_hipotecas'
+    'Numero_hipotecas' : 'Num_Hipotecas',
 })
 
-df_multi = df[df['Año'].isin([2015, 2018, 2022])].copy()
-
 variables = [
-    "Renta_media", "PIB_PP", "Precio_m2", "IPV", "IPC",
-    "Tasa_empleo", "Δ_población", "Vivienda_nueva", "Num_Hipotecas"
+    "Tasa_esfuerzo",
+    "Renta_media",
+    "PIB_PP",
+    "Precio_m2",
+     "IPV",
+     "IPC",
+    "Tasa_empleo",
+    "Δ_población",
+    "Vivienda_nueva",
+    "Num_Hipotecas",
 ]
 
+df_multi = df[df['Año'].isin([2015, 2018, 2022])].copy()
 df_multi = df_multi.dropna(subset=variables + ['Tasa_esfuerzo'])
 
 X = df_multi[variables].astype(float)
@@ -61,7 +71,7 @@ X = sm.add_constant(X, has_constant='add')
 modelo = sm.OLS(y, X).fit()
 print(modelo.summary())
 
-#Se realiza una selección hacia atras
+#Se realiza un Backward Selection
 
 def backward_elimination(X, y, verbose=True):
     while True:
@@ -82,7 +92,7 @@ print(modelo_optimo.summary())
 
 coeficientes = modelo_optimo.params
 
-# Ecuación final
+#Se imprime como quedaria nuestra ecuación final
 ecuacion = f"Tasa_esfuerzo = {coeficientes[0]:.4g}"  
 
 for variable, coef in coeficientes.items():
@@ -93,10 +103,11 @@ for variable, coef in coeficientes.items():
 print("Ecuación final:")
 print(ecuacion)
 
-#---------------------------------------------------------------------------------------------------------------------------------
-
-
+rmse = np.sqrt(modelo_optimo.mse_resid)
+print(rmse)
+#------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 # GRÁFICO DE RESIDUOS
+#------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 residuos = modelo_optimo.resid
 valores_ajustados = modelo_optimo.fittedvalues
@@ -111,10 +122,14 @@ plt.ylabel('Residuos', fontsize=12)
 plt.tight_layout()
 plt.show()
 
+#------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 # GRÁFICO Q-Q
+#------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 residuos = modelo_optimo.resid
-sm.qqplot(residuos, line='45')
-plt.title("Q-Q Plot de Residuos (Modelo Óptimo)")
-plt.grid(True, linestyle='--', alpha=0.5)
+
+fig = sm.qqplot(residuos, line='45', fit=True)
+plt.title("Q-Q Plot de Residuos (Modelo Óptimo)", fontsize=14)
+plt.grid(True, linestyle='--', alpha=0.6)
+plt.tight_layout()
 plt.show()
