@@ -22,7 +22,6 @@ df = df.rename(columns={
     'Tasa_crecimiento_población': 'Δ_población',
     'Numero_vivienda_terminadas': 'Vivienda_nueva',
     'Numero_hipotecas' : 'Num_Hipotecas',
-    'IPV' : 'IPV',
 })
 
 vars_num = [col for col in df.columns if col != 'Año']
